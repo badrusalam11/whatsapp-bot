@@ -1,4 +1,10 @@
 const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
+const path = require('path');
+const isPkg = typeof process.pkg !== 'undefined';
+const basePath = isPkg ? path.dirname(process.execPath) : __dirname;
+
+const chromePath = path.join(basePath, 'chromium', 'chrome.exe');
+console.log("🧭 Using Chrome path:", chromePath);
 const qrcode = require('qrcode-terminal');
 const express = require('express');
 const app = express();
@@ -10,7 +16,12 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 const client = new Client({
-    authStrategy: new LocalAuth()
+    authStrategy: new LocalAuth(),
+    puppeteer: {
+    executablePath: path.join(chromePath),
+    headless: true, // or false if you want to see the window
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  }
 });
 
 client.on('qr', (qr) => {
