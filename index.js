@@ -33,8 +33,45 @@ client.on('ready', () => {
     console.log('✅ WhatsApp client is ready!');
 });
 
-client.on('message', message => {
+client.on('message', async message => {
     console.log(`📩 ${message.from}: ${message.body}`);
+
+    // Skip system or group messages (optional)
+    // if (message.fromMe || message.isStatus || message.type !== 'chat') return;
+    if (!message.body.startsWith('#TanyaBadru')) {
+        return false;
+    }
+    // Remove the command prefix
+    message.body = message.body.replace('#TanyaBadru', '').trim();
+    try {
+        console.log(`🤖 Processing message: ${message.body}`);
+        await client.sendMessage(message.from, "🤖 Processing your request...");
+        // Send to Ollama API (running at localhost:11434)
+        const response = await fetch('http://localhost:11434/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'llama3',
+                prompt: message.body,
+                system: `Kamu adalah Badru, asisten AI cerdas dan ramah yang membantu pengguna WhatsApp menjawab berbagai pertanyaan secara akurat, sopan, dan mudah dipahami. 
+                Jawablah dalam bahasa yang sama dengan bahasa yang digunakan oleh pengguna. 
+                Jika pertanyaan menggunakan bahasa Indonesia, jawab dengan bahasa Indonesia. 
+                Jika menggunakan bahasa Inggris, jawab dengan bahasa Inggris, dan sesuaikan gaya bahasa dengan konteks pengguna.`,
+                stream: false
+            })
+            });
+
+        const data = await response.json();
+        // Send the response back to WhatsApp
+        if (data && data.response) {
+            await client.sendMessage(message.from, data.response.trim());
+        } else {
+            await client.sendMessage(message.from, "❌ Failed to get AI response.");
+        }
+    } catch (error) {
+        console.error('❌ AI Error:', error);
+        await client.sendMessage(message.from, "⚠️ Error calling AI: " + error.message);
+    }
 });
 
 client.initialize();

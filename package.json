@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "eventsource-parser": "^3.0.2",
     "express": "^5.1.0",
     "multer": "^2.0.1",
     "qrcode-terminal": "^0.12.0",
