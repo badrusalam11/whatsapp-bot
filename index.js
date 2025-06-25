@@ -47,7 +47,7 @@ client.on('message', async message => {
         console.log(`🤖 Processing message: ${message.body}`);
         await client.sendMessage(message.from, "🤖 Processing your request...");
         // Send to Ollama API (running at localhost:11434)
-        const response = await fetch('http://localhost:11434/api/generate', {
+        const response = await fetch('http://127.0.0.1:11434/api/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
