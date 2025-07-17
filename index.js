@@ -1,4 +1,4 @@
-const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia, Poll } = require('whatsapp-web.js');
 const path = require('path');
 const isPkg = typeof process.pkg !== 'undefined';
 const basePath = isPkg ? path.dirname(process.execPath) : __dirname;
@@ -135,7 +135,78 @@ app.post('/send-file', upload.single('file'), async (req, res) => {
 
 
 
+// Alternative: More flexible template replacement function
+function replacePlaceholders(text) {
+    const now = new Date();
+    
+    const replacements = {
+        'currDate': now.toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        }),
+        'currTime': now.toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit'
+        }),
+        'currDateTime': now.toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        })
+    };
+    
+    let result = text;
+    for (const [key, value] of Object.entries(replacements)) {
+        const regex = new RegExp(`\\$\\{${key}\\}`, 'g');
+        result = result.replace(regex, value);
+    }
+    
+    return result;
+}
 
+// Enhanced version with more placeholders
+app.post('/send-poll', async (req, res) => {
+    const { chatId, question, options } = req.body;
+
+    if (!chatId || !question || !Array.isArray(options) || options.length < 2) {
+        return res.status(400).json({
+            error: 'chatId, question, and at least two options are required.'
+        });
+    }
+
+    if (options.length > 12) {
+        return res.status(400).json({
+            error: 'Poll can have maximum 12 options'
+        });
+    }
+
+    try {
+        // Process question with multiple possible placeholders
+        const processedQuestion = replacePlaceholders(question);
+
+        const poll = new Poll(processedQuestion, options);
+        await client.sendMessage(chatId, poll);
+        
+        res.json({
+            status: 'sent',
+            chatId,
+            question: processedQuestion,
+            originalQuestion: question,
+            options,
+            message: 'Poll sent successfully'
+        });
+        
+    } catch (err) {
+        console.error('❌ Error sending poll:', err);
+        res.status(500).json({ error: err.toString() });
+    }
+});
+
+
+// start the app
 app.listen(3001, () => {
     console.log('🚀 API server running at http://localhost:3001');
 });
