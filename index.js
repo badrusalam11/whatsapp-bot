@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { Client, LocalAuth, MessageMedia, Poll } = require('whatsapp-web.js');
 const path = require('path');
 const isPkg = typeof process.pkg !== 'undefined';
@@ -34,7 +35,9 @@ client.on('ready', () => {
 });
 
 client.on('message', message => {
-    console.log(`📩 ${message.from}: ${message.body}`);
+    if (process.env.ENVIRONMENT!='production') {
+        console.log(`📩 ${message.from}: ${message.body}`);
+    }
 });
 
 client.initialize();
